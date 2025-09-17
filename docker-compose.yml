@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+  sentinet-db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: superrootpw
+      MYSQL_DATABASE: sentinet_db
+      MYSQL_USER: flaskuser
+      MYSQL_PASSWORD: flaskpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./defense/db/sentinet_db_1.0.0.sql:/docker-entrypoint-initdb.d/init.sql
+
+  sentinet-server:
+    build: ./defense/server
+    depends_on:
+      - sentinet-db
+    environment:
+      FLASK_APP: app
+      FLASK_ENV: development
+      DB_HOST: sentinet-db
+      DB_USER: flaskuser
+      DB_PASS: flaskpass
+      DB_NAME: sentinet_db
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./defense/server:/app
