@@ -1,0 +1,55 @@
+=== Node.js dependencies ===
+# Ignore Node.js modules and logs
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+=== Python dependencies ===
+# Ignore Python cache, compiled files, and virtual environments
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+=== Environment files ===
+# Ignore environment variable files
+*.env
+*.env.local
+*.env.*.local
+
+=== Build output ===
+# Ignore build and coverage output
+dist/
+build/
+coverage/
+*.log
+
+=== IDE/editor files ===
+# Ignore editor-specific folders and swap files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+=== OS generated files ===
+# Ignore OS-specific hidden files
+.DS_Store
+Thumbs.db
+
+=== Docker artifacts ===
+# Ignore Docker-related files
+*.pid
+*.sock
+
+=== Misc ===
+# Ignore compressed and archive files
+*.tgz
+*.tar.gz
+*.zip
