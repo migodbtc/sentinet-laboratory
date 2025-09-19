@@ -1,34 +1,64 @@
 import datetime
 
 class BaseResource:
-    """Base Resource class for data/model logic."""
     def __init__(self, db_connection, table=None, fields=None):
         self.db = db_connection
         self.table = table
         self.fields = fields or []
 
+    def _validate_table(self):
+        if not self.table or not isinstance(self.table, str):
+            raise ValueError("Table name not set or invalid.")
+        if not self.table.replace('_', '').isalnum():
+            raise ValueError("Unsafe table name.")
+        return self.table
+
+    def _validate_fields(self, fields):
+        if not self.fields or not isinstance(self.fields, list):
+            raise ValueError("Fields not set or invalid.")
+        for f in fields:
+            if f not in self.fields:
+                raise ValueError(f"Unsafe field: {f}")
+        return fields
+
     def all(self):
-        """Return all records."""
-        if not self.table:
-            raise ValueError("Table name not set.")
+        """
+        Returns all records from the resource table.
+        Parameters:
+            None
+
+        Example:
+            employees_resource.all()  # Returns all employees
+            shifts_resource.all()      # Returns all shifts
+            payroll_resource.all()     # Returns all payroll records
+            attendance_logs_resource.all()  # Returns all attendance logs
+        """
+        table = self._validate_table()
         with self.db.cursor(dictionary=True) as cursor:
-            cursor.execute("SELECT * FROM %s", (self.table,))
+            sql = f"SELECT * FROM `{table}`"
+            cursor.execute(sql)
             results = cursor.fetchall()
-        # timedelta conversion
         for row in results:
             for key, value in row.items():
                 if isinstance(value, datetime.timedelta):
                     row[key] = str(value)
         return results
 
-
     def find(self, id):
-        """Find a record by ID."""
-        if not self.table or not self.fields:
-            raise ValueError("Table name or fields not set.")
+        """
+        Finds a record by primary key.
+        Parameters:
+            id (any): The primary key value to search for.
+
+        Example:
+            employees_resource.find(1)  # Finds employee with employee_id=1
+        """
+        table = self._validate_table()
         pk = self.fields[0]
+        self._validate_fields([pk])
         with self.db.cursor(dictionary=True) as cursor:
-            cursor.execute("SELECT * FROM %s WHERE %s = %s", (self.table, pk, id))
+            sql = f"SELECT * FROM `{table}` WHERE `{pk}` = %s"
+            cursor.execute(sql, (id,))
             result = cursor.fetchone()
         if result:
             for key, value in result.items():
@@ -37,19 +67,31 @@ class BaseResource:
         return result
 
     def create(self, data):
-        """Create a new record."""
-        if not self.table:
-            raise ValueError("Table name not set.")
-        # validate and build columns safely
+        """
+        Creates a new record in the resource table.
+        Parameters:
+            data (dict): Dictionary of column-value pairs to insert.
+
+        Example:
+            employees_resource.create({
+                'first_name': 'Eve',
+                'last_name': 'Garcia',
+                'position': 'DevOps Engineer',
+                'base_salary': 60000.00,
+                'hire_date': '2025-09-19'
+            })
+        """
+        table = self._validate_table()
         cols = []
         vals = []
         for k, v in data.items():
             if not isinstance(k, str) or not k.replace('_', '').isalnum():
                 raise ValueError("Invalid column name")
+            self._validate_fields([k])
             cols.append(f"`{k}`")
             vals.append(v)
         placeholders = ', '.join(['%s'] * len(vals))
-        sql = "INSERT INTO `{}` ({}) VALUES ({})".format(self.table, ', '.join(cols), placeholders)
+        sql = f"INSERT INTO `{table}` ({', '.join(cols)}) VALUES ({placeholders})"
         with self.db.cursor() as cursor:
             cursor.execute(sql, tuple(vals))
             self.db.commit()
@@ -57,31 +99,49 @@ class BaseResource:
         return self.find(new_id)
 
     def update(self, id, data):
-        """Update a record by ID."""
-        if not self.table or not self.fields:
-            raise ValueError("Table name or fields not set.")
+        """
+        Updates a record by primary key.
+        Parameters:
+            id (any): The primary key value to update.
+            data (dict): Dictionary of column-value pairs to update.
+
+        Example:
+            employees_resource.update(2, {
+                'base_salary': 42000.00,
+                'position': 'HR Lead'
+            })
+        """
+        table = self._validate_table()
         pk = self.fields[0]
-        # build set clause safely
+        self._validate_fields([pk])
         set_parts = []
         vals = []
         for k, v in data.items():
             if not isinstance(k, str) or not k.replace('_', '').isalnum():
                 raise ValueError("Invalid column name")
+            self._validate_fields([k])
             set_parts.append(f"`{k}` = %s")
             vals.append(v)
         set_clause = ', '.join(set_parts)
-        sql = "UPDATE `{}` SET {} WHERE `{}` = %s".format(self.table, set_clause, pk)
+        sql = f"UPDATE `{table}` SET {set_clause} WHERE `{pk}` = %s"
         with self.db.cursor() as cursor:
             cursor.execute(sql, tuple(vals) + (id,))
             self.db.commit()
         return self.find(id)
 
     def delete(self, id):
-        """Delete a record by ID."""
-        if not self.table or not self.fields:
-            raise ValueError("Table name or fields not set.")
+        """
+        Deletes a record by primary key.
+        Parameters:
+            id (any): The primary key value to delete.
+
+        Example:
+            employees_resource.delete(4) 
+        """
+        table = self._validate_table()
         pk = self.fields[0]
-        sql = f"DELETE FROM {self.table} WHERE {pk} = %s"
+        self._validate_fields([pk])
+        sql = f"DELETE FROM `{table}` WHERE `{pk}` = %s"
         with self.db.cursor() as cursor:
             cursor.execute(sql, (id,))
             self.db.commit()
