@@ -1,5 +1,5 @@
 from ._base_controller import BaseController
-from ..resource.payroll_resource import PayrollResource
+from resource.payroll_resource import PayrollResource
 
 class PayrollController(BaseController):
     def __init__(self, db_conn):

@@ -1,5 +1,5 @@
 from ._base_controller import BaseController
-from ..resource.attendance_logs_resource import AttendanceLogsResource
+from resource.attendance_logs_resource import AttendanceLogsResource
 
 class AttendanceLogsController(BaseController):
     def __init__(self, db_conn):

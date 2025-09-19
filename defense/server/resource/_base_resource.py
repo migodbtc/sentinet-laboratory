@@ -18,7 +18,7 @@ class BaseResource:
             raise ValueError("Fields not set or invalid.")
         for f in fields:
             if f not in self.fields:
-                raise ValueError(f"Unsafe field: {f}")
+                raise ValueError(f"Unsafe field: {f}. It is not included in the following fields: {self.fields}")
         return fields
 
     def all(self):
@@ -28,10 +28,7 @@ class BaseResource:
             None
 
         Example:
-            employees_resource.all()  # Returns all employees
-            shifts_resource.all()      # Returns all shifts
-            payroll_resource.all()     # Returns all payroll records
-            attendance_logs_resource.all()  # Returns all attendance logs
+            employees_resource.all()  
         """
         table = self._validate_table()
         with self.db.cursor(dictionary=True) as cursor:

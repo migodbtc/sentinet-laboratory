@@ -8,10 +8,10 @@ import os
 from flask import Flask, jsonify
 from dotenv import load_dotenv
 
-from .controller.attendance_logs_controller import AttendanceLogsController
-from .controller.employees_controller import EmployeesController
-from .controller.payroll_controller import PayrollController
-from .controller.shifts_controller import ShiftsController
+from controller.attendance_logs_controller import AttendanceLogsController
+from controller.employees_controller import EmployeesController
+from controller.payroll_controller import PayrollController
+from controller.shifts_controller import ShiftsController
 
 load_dotenv()
 
