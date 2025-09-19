@@ -8,18 +8,6 @@ import os
 from flask import Flask, jsonify
 from dotenv import load_dotenv
 
-# print location on startup
-print(f"Current working directory: {os.getcwd()}")
-# parent directories (1 layer up then 2 layer up)
-print(f"Parent directory (1 layer up): {os.path.dirname(os.getcwd())}")
-print(f"Parent directory (2 layers up): {os.path.dirname(os.path.dirname(os.getcwd()))}")
-
-# Import resources and controllers (relative imports)
-from .resource.attendance_logs_resource import AttendanceLogsResource
-from .resource.employees_resource import EmployeesResource
-from .resource.payroll_resource import PayrollResource
-from .resource.shifts_resource import ShiftsResource
-
 from .controller.attendance_logs_controller import AttendanceLogsController
 from .controller.employees_controller import EmployeesController
 from .controller.payroll_controller import PayrollController
@@ -27,8 +15,12 @@ from .controller.shifts_controller import ShiftsController
 
 load_dotenv()
 
+# Very, very slow interval database connection calling
+# Because sometimes Docker takes a while to set up/boot up
+# Edit as you wish though
 def attempt_db_call():
     max_attempts = 10
+    interval_seconds = 10
     attempt = 0
     while attempt < max_attempts:
         try:
@@ -43,7 +35,7 @@ def attempt_db_call():
                 return conn
         except Error as e:
             print(f"Attempt {attempt+1}: DB connection failed: {e}")
-            time.sleep(3)
+            time.sleep(interval_seconds)
             attempt += 1
     raise Exception("Could not connect to the database after several attempts.")
 
@@ -52,17 +44,11 @@ app = Flask(__name__)
 # Create DB connection
 db_conn = attempt_db_call()
 
-# Instantiate resources
-attendance_logs_resource = AttendanceLogsResource(db_conn)
-employees_resource = EmployeesResource(db_conn)
-payroll_resource = PayrollResource(db_conn)
-shifts_resource = ShiftsResource(db_conn)
-
-# Instantiate controllers
-attendance_logs_controller = AttendanceLogsController(attendance_logs_resource)
-employees_controller = EmployeesController(employees_resource)
-payroll_controller = PayrollController(payroll_resource)
-shifts_controller = ShiftsController(shifts_resource)
+# Instantiate controllers (pass db_conn directly)
+attendance_logs_controller = AttendanceLogsController(db_conn)
+employees_controller = EmployeesController(db_conn)
+payroll_controller = PayrollController(db_conn)
+shifts_controller = ShiftsController(db_conn)
 
 # Register blueprints
 app.register_blueprint(attendance_logs_controller.blueprint, url_prefix='/attendance_logs')
