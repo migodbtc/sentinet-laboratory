@@ -2,7 +2,7 @@ import time
 import mysql.connector
 from mysql.connector import Error
 import os
-from flask import Flask
+from flask import Flask, jsonify
 from dotenv import load_dotenv
 
 load_dotenv()  
@@ -27,18 +27,18 @@ def get_db_connection():
             attempt += 1
     raise Exception("Could not connect to the database after several attempts.")
 
-conn = get_db_connection()
-
-cursor = conn.cursor()
-cursor.execute("SELECT NOW()")
-print("DB Time:", cursor.fetchone())
-
 
 app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "Hello, Flask is running in .venv!"
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SHOW TABLES;")
+            result = cursor.fetchall()
+            
+            return jsonify(result)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
