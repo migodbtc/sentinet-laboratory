@@ -14,7 +14,7 @@ class AttendanceLogsEndpointTestCase(unittest.TestCase):
         self.assertIn(response.status_code, [200, 404])
 
     def test_store(self):
-        payload = {"employee_id": 1, "log_date": "2025-09-19", "time_in": "08:00:00", "time_out": "17:00:00", "hours_worked": 8}
+        payload = {"employee_id": 1, "log_date": "2025-09-19", "time_in": "08:00:00", "time_out": "17:00:00", "hours_worked": 8, "shift_id": 1}
         response = self.client.post('/attendance_logs/', json=payload)
         self.assertIn(response.status_code, [201, 400, 404])
 

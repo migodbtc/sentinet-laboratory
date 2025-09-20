@@ -16,6 +16,7 @@ class EmployeesEndpointTestCase(unittest.TestCase):
 
     def test_store(self):
         payload = {
+            "user_id": 3,
             "first_name": "Eve",
             "last_name": "Garcia",
             "position": "DevOps Engineer",

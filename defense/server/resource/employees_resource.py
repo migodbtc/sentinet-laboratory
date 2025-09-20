@@ -6,6 +6,6 @@ class EmployeesResource(BaseResource):
         super().__init__(db_connection)
         self.table = 'employees'
         self.fields = [
-            'employee_id', 'first_name', 'last_name', 'position',
+            'employee_id', 'user_id', 'first_name', 'last_name', 'position',
             'base_salary', 'hire_date'
         ]

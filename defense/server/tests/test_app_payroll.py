@@ -16,7 +16,7 @@ class PayrollEndpointTestCase(unittest.TestCase):
 
     def test_store(self):
         payload = {
-            "employee_id": 1,
+            "employee_id": 2,
             "period_start": "2025-09-01",
             "period_end": "2025-09-15",
             "total_hours": 80,
@@ -24,8 +24,6 @@ class PayrollEndpointTestCase(unittest.TestCase):
             "deductions": 500.00,
             "net_pay": 1500.00,
             "generated_at": "2025-09-19T08:00:00",
-            "type": "monthly",
-            "timestamp": "2025-09-19T08:00:00"
         }
         response = self.client.post('/payroll/', json=payload)
         self.assertIn(response.status_code, [201, 400, 404])
