@@ -10,7 +10,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./defense/db/sentinet_db_1.1.1.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./defense/db/sentinet_db_1.1.3.sql:/docker-entrypoint-initdb.d/init.sql
 
   sentinet-server:
     build: ./defense/server

@@ -62,6 +62,23 @@ class BaseResource:
                 if isinstance(value, datetime.timedelta):
                     result[key] = str(value)
         return result
+    
+    def find_by_field(self, field, value):
+        """
+        Finds a record by a specific field.
+        Parameters:
+            field (str): The field name to search by.
+            value (any): The value to search for.
+
+        Example:
+            users_resource.find_by_field('username', 'alice.santos')
+        """
+        self._validate_fields([field])
+        table = self._validate_table()
+        with self.db.cursor(dictionary=True) as cursor:
+            sql = f"SELECT * FROM `{table}` WHERE `{field}` = %s"
+            cursor.execute(sql, (value,))
+            return cursor.fetchone()
 
     def create(self, data):
         """

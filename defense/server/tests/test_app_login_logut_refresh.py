@@ -16,12 +16,16 @@ class AuthTestCase(unittest.TestCase):
         # Simulate login to get token
         payload = {"username": "alice.santos", "password": "hashed_password_1"}
         login_response = self.client.post("/login", json=payload)
+        self.assertEqual(login_response.status_code, 200)  # Ensure login is successful
+
         access_token = login_response.get_json()["access_token"]
 
         # Test logout
         headers = {"Authorization": f"Bearer {access_token}"}
         response = self.client.post("/logout", headers=headers)
         self.assertEqual(response.status_code, 200)
+        self.assertIn("message", response.get_json())
+        self.assertEqual(response.get_json()["message"], "Logged out successfully")
 
     def test_refresh(self):
         # Simulate login to get refresh token
