@@ -6,5 +6,5 @@ class UsersResource(BaseResource):
         super().__init__(db_connection)
         self.table = 'users'
         self.fields = [
-            'user_id', 'username', 'password_hash', 'role', 'created_at'
+            'user_id', 'username', 'password_hash', 'role', 'created_at', 'refresh_token'
         ]

@@ -6,6 +6,9 @@ import mysql.connector
 from mysql.connector import Error
 import os
 from flask import Flask, jsonify
+from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+from flask import request, make_response
+from werkzeug.security import check_password_hash
 from dotenv import load_dotenv
 
 from controller.attendance_logs_controller import AttendanceLogsController
@@ -40,6 +43,8 @@ def attempt_db_call():
     raise Exception("Could not connect to the database after several attempts.")
 
 app = Flask(__name__)
+app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
+jwt = JWTManager(app)
 
 # Create DB connection
 db_conn = attempt_db_call()
@@ -60,6 +65,69 @@ app.register_blueprint(shifts_controller.blueprint, url_prefix='/shifts')
 def home():
     message = {"message": "Welcome to the Sentinet Laboratory API!"}
     return jsonify(message)
+
+@app.route("/login", methods=["POST"])
+def login():
+    # Extract credentials from request
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
+
+    # Username and password must be provided
+    if not username or not password:
+        return make_response(jsonify({"message": "Username and password are required"}), 400)
+
+    # Manage cursor context for retrieving user account associated to passed credentials
+    with db_conn.cursor(dictionary=True) as cursor:
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cursor.fetchone()
+
+    # Continue if user exists + password matches
+    if user and check_password_hash(user["password_hash"], password):
+        access_token = create_access_token(identity=user["id"])
+        refresh_token = create_refresh_token(identity=user["id"])
+
+        # Store refresh token in the database
+        with db_conn.cursor() as cursor:
+            cursor.execute("UPDATE `users` SET `refresh_token` = %s WHERE `user_id` = %s", (refresh_token, user["user_id"]))
+            db_conn.commit()
+
+        return jsonify(access_token=access_token, refresh_token=refresh_token), 200
+
+    # If user not found or password doesn't match
+    return make_response(jsonify({"error": "Invalid credentials"}), 401)
+
+@app.route("/logout", methods=["POST"])
+@jwt_required()
+def logout():
+    user_id = get_jwt_identity()
+
+    # Clear refresh token in the database
+    with db_conn.cursor() as cursor:
+        cursor.execute("UPDATE `users` SET `refresh_token` = NULL WHERE `user_id` = %s", (user_id,))
+        db_conn.commit()
+
+    return jsonify({"message": "Logged out successfully"}), 200
+
+@app.route("/refresh", methods=["POST"])
+def refresh():
+    data = request.get_json()
+    refresh_token = data.get("refresh_token")
+
+    if not refresh_token:
+        return make_response(jsonify({"message": "Refresh token is required"}), 400)
+
+    # Verify the refresh token against the database
+    with db_conn.cursor(dictionary=True) as cursor:
+        cursor.execute("SELECT * FROM users WHERE refresh_token = %s", (refresh_token,))
+        user = cursor.fetchone()
+
+    # If user found with the provided refresh token, issue a new access token
+    if user:
+        new_access_token = create_access_token(identity=user["user_id"])
+        return jsonify(access_token=new_access_token), 200
+
+    return make_response(jsonify({"error": "Invalid refresh token"}), 401)
 
 if __name__ == "__main__":
     app.run(debug=True)
